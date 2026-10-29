@@ -109,8 +109,12 @@ class AppMessages {
   }
 
   /// Formats currency with given symbol and two decimal digits.
-  static String formatCurrency(double amount, {String symbol = '\$'}) {
-    final formatter = NumberFormat.currency(symbol: symbol, decimalDigits: 2);
+  static String formatCurrency(double amount, {String symbol = '₹'}) {
+    final formatter = NumberFormat.currency(
+      locale: symbol == '₹' ? 'en_IN' : null,
+      symbol: symbol,
+      decimalDigits: 2,
+    );
     return formatter.format(amount);
   }
 

@@ -6,7 +6,7 @@ import '../providers/expense_providers.dart';
 import '../routes.dart';
 import '../utils/app_messages.dart';
 
-/// Detailed view of a single expense transaction.
+/// Detailed view of a single expense transaction with receipt-like fintech card.
 class ExpenseDetailScreen extends StatelessWidget {
   final Expense? initialExpense;
 
@@ -15,33 +15,33 @@ class ExpenseDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final expenseProvider = context.watch<ExpenseProvider>();
     final authProvider = context.watch<AuthProvider>();
     final currencySymbol = authProvider.currentUser.currencySymbol;
 
-    // Retrieve active instance from provider or passed argument
     final expense = initialExpense != null
         ? expenseProvider.getExpenseById(initialExpense!.id) ?? initialExpense!
         : null;
 
     if (expense == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Expense Details')),
+        appBar: AppBar(title: const Text('Transaction Details')),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
+              Icon(
                 Icons.error_outline_rounded,
                 size: 48,
-                color: Colors.grey,
+                color: theme.colorScheme.outline,
               ),
               const SizedBox(height: 12),
-              const Text('Expense not found or has been removed.'),
+              const Text('Transaction not found or has been deleted.'),
               const SizedBox(height: 16),
               FilledButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: const Text('Go Back'),
+                child: const Text('Back to Transactions'),
               ),
             ],
           ),
@@ -53,11 +53,14 @@ class ExpenseDetailScreen extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Transaction Details'),
+        title: const Text(
+          'Transaction Details',
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.4),
+        ),
         actions: [
           IconButton(
-            tooltip: 'Edit Expense',
-            icon: const Icon(Icons.edit_outlined),
+            tooltip: 'Edit Transaction',
+            icon: const Icon(Icons.edit_outlined, size: 20),
             onPressed: () {
               Navigator.of(
                 context,
@@ -65,8 +68,12 @@ class ExpenseDetailScreen extends StatelessWidget {
             },
           ),
           IconButton(
-            tooltip: 'Delete Expense',
-            icon: const Icon(Icons.delete_outline, color: Colors.red),
+            tooltip: 'Delete Transaction',
+            icon: const Icon(
+              Icons.delete_outline,
+              size: 20,
+              color: Color(0xFFE11D48),
+            ),
             onPressed: () => _handleDelete(context, expense),
           ),
         ],
@@ -74,108 +81,149 @@ class ExpenseDetailScreen extends StatelessWidget {
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 640),
+          constraints: const BoxConstraints(maxWidth: 680),
           child: ListView(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
             children: [
-              // Amount Display Card
+              // Receipt / Ledger Card
               Card(
-                elevation: 1,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    vertical: 28,
-                    horizontal: 20,
+                    vertical: 32,
+                    horizontal: 24,
                   ),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(16),
                     gradient: LinearGradient(
-                      colors: [
-                        category.backgroundColor,
-                        theme.colorScheme.surface,
-                      ],
+                      colors: isDark
+                          ? [
+                              category.backgroundColor.withValues(alpha: 0.15),
+                              theme.colorScheme.surface,
+                            ]
+                          : [
+                              category.backgroundColor.withValues(alpha: 0.3),
+                              Colors.white,
+                            ],
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                     ),
                   ),
                   child: Column(
                     children: [
+                      // Category Icon Squircle
                       Container(
-                        padding: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: category.color.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
+                          color: category.backgroundColor,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: category.borderColor),
                         ),
                         child: Icon(
                           category.icon,
-                          size: 36,
+                          size: 32,
                           color: category.color,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 18),
+
+                      // Large Amount in INR
                       Text(
-                        AppMessages.formatCurrency(
-                          expense.amount,
-                          symbol: currencySymbol,
-                        ),
-                        style: theme.textTheme.headlineLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
+                        '- ${AppMessages.formatCurrency(expense.amount, symbol: currencySymbol)}',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w900,
                           letterSpacing: -1,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
                         expense.title,
                         style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: -0.2,
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      if (expense.isDemo) ...[
-                        const SizedBox(height: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.shade100,
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.amber.shade300),
-                          ),
-                          child: Text(
-                            'SAMPLE DEMO RECORD',
-                            style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.amber.shade900,
+                      const SizedBox(height: 12),
+
+                      // Status Pills
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3.5,
+                            ),
+                            decoration: BoxDecoration(
+                              color: const Color(
+                                0xFF10B981,
+                              ).withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: const Color(
+                                  0xFF10B981,
+                                ).withValues(alpha: 0.3),
+                              ),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle_rounded,
+                                  size: 13,
+                                  color: Color(0xFF10B981),
+                                ),
+                                SizedBox(width: 4),
+                                Text(
+                                  'Recorded',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF10B981),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                        ),
-                      ],
+                          if (expense.isDemo) ...[
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 3.5,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.amber.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(20),
+                                border: Border.all(
+                                  color: Colors.amber.withValues(alpha: 0.4),
+                                ),
+                              ),
+                              child: const Text(
+                                'SAMPLE RECORD',
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w800,
+                                  letterSpacing: 0.5,
+                                  color: Colors.amber,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
                 ),
               ),
 
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-              // Detailed Info Tiles
+              // Transaction Metadata Card
               Card(
-                elevation: 0.5,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                  side: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(
-                      alpha: 0.4,
-                    ),
-                  ),
-                ),
                 child: Padding(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(20),
                   child: Column(
                     children: [
                       _buildDetailRow(
@@ -195,11 +243,19 @@ class ExpenseDetailScreen extends StatelessWidget {
                       const Divider(height: 24),
                       _buildDetailRow(
                         context,
-                        icon: Icons.description_outlined,
-                        label: 'Description',
+                        icon: Icons.tag_rounded,
+                        label: 'Reference ID',
+                        value: expense.id,
+                        isMono: true,
+                      ),
+                      const Divider(height: 24),
+                      _buildDetailRow(
+                        context,
+                        icon: Icons.notes_rounded,
+                        label: 'Notes',
                         value: expense.description.isNotEmpty
                             ? expense.description
-                            : 'No additional notes provided.',
+                            : 'No additional notes provided for this transaction.',
                         isMultiLine: true,
                       ),
                     ],
@@ -207,21 +263,25 @@ class ExpenseDetailScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: 28),
 
-              // Action Buttons
+              // Action Buttons Row
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton.icon(
-                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      icon: const Icon(
+                        Icons.delete_outline,
+                        size: 18,
+                        color: Color(0xFFE11D48),
+                      ),
                       label: const Text(
                         'Delete',
-                        style: TextStyle(color: Colors.red),
+                        style: TextStyle(color: Color(0xFFE11D48)),
                       ),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: BorderSide(color: Colors.red.shade300),
+                        side: const BorderSide(color: Color(0xFFE11D48)),
                       ),
                       onPressed: () => _handleDelete(context, expense),
                     ),
@@ -229,8 +289,8 @@ class ExpenseDetailScreen extends StatelessWidget {
                   const SizedBox(width: 14),
                   Expanded(
                     child: FilledButton.icon(
-                      icon: const Icon(Icons.edit_outlined),
-                      label: const Text('Edit Expense'),
+                      icon: const Icon(Icons.edit_outlined, size: 18),
+                      label: const Text('Edit Transaction'),
                       style: FilledButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                       ),
@@ -258,21 +318,24 @@ class ExpenseDetailScreen extends StatelessWidget {
     required String value,
     Color? valueColor,
     bool isMultiLine = false,
+    bool isMono = false,
   }) {
     final theme = Theme.of(context);
+
     return Row(
       crossAxisAlignment: isMultiLine
           ? CrossAxisAlignment.start
           : CrossAxisAlignment.center,
       children: [
-        Icon(icon, size: 20, color: theme.colorScheme.primary),
+        Icon(icon, size: 18, color: theme.colorScheme.primary),
         const SizedBox(width: 12),
         SizedBox(
-          width: 90,
+          width: 95,
           child: Text(
             label,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.textTheme.bodyMedium?.color?.withValues(alpha: 0.7),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.65),
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
@@ -283,6 +346,8 @@ class ExpenseDetailScreen extends StatelessWidget {
             style: theme.textTheme.bodyMedium?.copyWith(
               fontWeight: FontWeight.w600,
               color: valueColor,
+              fontFamily: isMono ? 'monospace' : null,
+              fontSize: isMono ? 12 : null,
             ),
           ),
         ),
@@ -293,8 +358,9 @@ class ExpenseDetailScreen extends StatelessWidget {
   Future<void> _handleDelete(BuildContext context, Expense expense) async {
     final confirmed = await AppMessages.showConfirmDialog(
       context,
-      title: 'Delete Expense?',
-      message: 'Are you sure you want to delete "${expense.title}"?',
+      title: 'Delete Transaction?',
+      message:
+          'Are you sure you want to permanently delete "${expense.title}"?',
       confirmLabel: 'Delete',
     );
 
@@ -304,10 +370,10 @@ class ExpenseDetailScreen extends StatelessWidget {
       );
       if (context.mounted) {
         if (success) {
-          AppMessages.showSuccess(context, 'Expense deleted');
+          AppMessages.showSuccess(context, 'Transaction deleted');
           Navigator.of(context).pop();
         } else {
-          AppMessages.showError(context, 'Could not delete expense');
+          AppMessages.showError(context, 'Could not delete transaction');
         }
       }
     }

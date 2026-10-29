@@ -83,7 +83,7 @@ void main() {
   group('AppUser Model Tests', () {
     test('defaultProfile initializes sensible defaults', () {
       final user = AppUser.defaultProfile();
-      expect(user.currencySymbol, '\$');
+      expect(user.currencySymbol, '₹');
       expect(user.monthlyBudget, greaterThan(0));
       expect(user.name.isNotEmpty, true);
     });

@@ -29,6 +29,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final expenseProvider = context.watch<ExpenseProvider>();
     final authProvider = context.watch<AuthProvider>();
     final currencySymbol = authProvider.currentUser.currencySymbol;
@@ -42,55 +43,68 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('All Expenses'),
+        title: const Text(
+          'Transactions',
+          style: TextStyle(fontWeight: FontWeight.w800, letterSpacing: -0.4),
+        ),
         actions: [
-          IconButton(
-            tooltip: _sortAmountDesc ? 'Sort by Date' : 'Sort by Amount',
-            icon: Icon(
-              _sortAmountDesc ? Icons.swap_vert_rounded : Icons.sort_rounded,
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: TextButton.icon(
+              icon: Icon(
+                _sortAmountDesc
+                    ? Icons.trending_down_rounded
+                    : Icons.access_time_rounded,
+                size: 16,
+              ),
+              label: Text(
+                _sortAmountDesc ? 'Amount' : 'Recent',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              style: TextButton.styleFrom(
+                backgroundColor: isDark
+                    ? const Color(0xFF1E293B)
+                    : const Color(0xFFF1F5F9),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+              ),
+              onPressed: () {
+                setState(() {
+                  _sortAmountDesc = !_sortAmountDesc;
+                });
+              },
             ),
-            onPressed: () {
-              setState(() {
-                _sortAmountDesc = !_sortAmountDesc;
-              });
-            },
           ),
         ],
       ),
       body: Align(
         alignment: Alignment.topCenter,
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 840),
+          constraints: const BoxConstraints(maxWidth: 880),
           child: Column(
             children: [
               // Search Input Bar
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search by title or description...',
-                    prefixIcon: const Icon(Icons.search_rounded),
+                    hintText: 'Search by title, merchant, or notes...',
+                    prefixIcon: const Icon(Icons.search_rounded, size: 20),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
-                            icon: const Icon(Icons.clear_rounded),
+                            icon: const Icon(Icons.clear_rounded, size: 18),
                             onPressed: () {
                               _searchController.clear();
                               expenseProvider.setSearchQuery('');
                             },
                           )
                         : null,
-                    filled: true,
-                    fillColor: theme.colorScheme.surfaceContainerHighest
-                        .withValues(alpha: 0.5),
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: BorderSide.none,
-                    ),
                   ),
                   onChanged: (val) {
                     expenseProvider.setSearchQuery(val);
@@ -111,27 +125,59 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
 
               // Filter Summary Header
               Padding(
-                padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      '${items.length} ${items.length == 1 ? "expense" : "expenses"} found',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.textTheme.bodySmall?.color?.withValues(
-                          alpha: 0.7,
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 10),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isDark
+                        ? const Color(0xFF111827)
+                        : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${items.length} ${items.length == 1 ? "transaction" : "transactions"} found',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 12,
+                          color: theme.textTheme.bodySmall?.color?.withValues(
+                            alpha: 0.7,
+                          ),
                         ),
                       ),
-                    ),
-                    Text(
-                      'Total: ${AppMessages.formatCurrency(filteredTotal, symbol: currencySymbol)}',
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.primary,
+                      Row(
+                        children: [
+                          Text(
+                            'Subtotal: ',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: 12,
+                              color: theme.textTheme.bodySmall?.color
+                                  ?.withValues(alpha: 0.7),
+                            ),
+                          ),
+                          Text(
+                            AppMessages.formatCurrency(
+                              filteredTotal,
+                              symbol: currencySymbol,
+                            ),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              fontWeight: FontWeight.w800,
+                              letterSpacing: -0.3,
+                              color: isDark
+                                  ? const Color(0xFF818CF8)
+                                  : const Color(0xFF0F172A),
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
 
@@ -172,7 +218,10 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         icon: const Icon(Icons.add_rounded),
-        label: const Text('Add Expense'),
+        label: const Text('Add Transaction'),
+        elevation: 3,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.onPrimary,
         onPressed: () {
           Navigator.of(context).pushNamed(ExpenseTrackerRoutes.expenseForm);
         },
@@ -194,32 +243,34 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
           children: [
             Icon(
               Icons.search_off_rounded,
-              size: 56,
+              size: 48,
               color: theme.colorScheme.outline.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 16),
             Text(
               hasActiveFilter
-                  ? 'No matching expenses found'
-                  : 'No expenses recorded yet',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+                  ? 'No matching transactions'
+                  : 'No transactions recorded',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               hasActiveFilter
-                  ? 'Try searching with different terms or resetting the category filter.'
-                  : 'Start tracking your spending by adding a new expense.',
+                  ? 'Try adjusting your search criteria or resetting category filter.'
+                  : 'Start tracking by recording your first expense.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.7),
+                color: theme.textTheme.bodySmall?.color?.withValues(
+                  alpha: 0.65,
+                ),
               ),
             ),
             const SizedBox(height: 16),
             if (hasActiveFilter)
               OutlinedButton.icon(
-                icon: const Icon(Icons.clear_all_rounded, size: 18),
+                icon: const Icon(Icons.clear_all_rounded, size: 16),
                 label: const Text('Reset Filters'),
                 onPressed: () {
                   _searchController.clear();
@@ -229,8 +280,8 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
               )
             else
               FilledButton.icon(
-                icon: const Icon(Icons.add_rounded, size: 18),
-                label: const Text('Add First Expense'),
+                icon: const Icon(Icons.add_rounded, size: 16),
+                label: const Text('Record Transaction'),
                 onPressed: () {
                   Navigator.of(
                     context,
@@ -246,7 +297,7 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
   Future<void> _handleDelete(BuildContext context, Expense expense) async {
     final confirmed = await AppMessages.showConfirmDialog(
       context,
-      title: 'Delete Expense?',
+      title: 'Delete Transaction?',
       message: 'Are you sure you want to delete "${expense.title}"?',
       confirmLabel: 'Delete',
     );
@@ -257,9 +308,9 @@ class _ExpenseListScreenState extends State<ExpenseListScreen> {
       );
       if (context.mounted) {
         if (success) {
-          AppMessages.showSuccess(context, 'Expense deleted');
+          AppMessages.showSuccess(context, 'Transaction deleted');
         } else {
-          AppMessages.showError(context, 'Could not delete expense');
+          AppMessages.showError(context, 'Could not delete transaction');
         }
       }
     }

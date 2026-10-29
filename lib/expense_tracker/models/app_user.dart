@@ -10,18 +10,18 @@ class AppUser {
     required this.id,
     required this.name,
     required this.email,
-    this.currencySymbol = '\$',
-    this.monthlyBudget = 2500.0,
+    this.currencySymbol = '₹',
+    this.monthlyBudget = 50000.0,
   });
 
-  /// Default demo/guest profile for first-time use.
+  /// Default profile for first-time use with Indian Rupee defaults.
   factory AppUser.defaultProfile() {
     return const AppUser(
       id: 'default_user_01',
       name: 'Alex Johnson',
       email: 'alex.johnson@example.com',
-      currencySymbol: '\$',
-      monthlyBudget: 2500.0,
+      currencySymbol: '₹',
+      monthlyBudget: 50000.0,
     );
   }
 
@@ -56,8 +56,8 @@ class AppUser {
       id: json['id'] as String? ?? 'default_user_01',
       name: json['name'] as String? ?? 'Alex Johnson',
       email: json['email'] as String? ?? 'alex.johnson@example.com',
-      currencySymbol: json['currencySymbol'] as String? ?? '\$',
-      monthlyBudget: (json['monthlyBudget'] as num?)?.toDouble() ?? 2500.0,
+      currencySymbol: json['currencySymbol'] as String? ?? '₹',
+      monthlyBudget: (json['monthlyBudget'] as num?)?.toDouble() ?? 50000.0,
     );
   }
 }
